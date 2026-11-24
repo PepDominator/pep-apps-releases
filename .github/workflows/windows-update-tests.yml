@@ -1,0 +1,45 @@
+name: Windows updater verification
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag to verify
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  native-windows:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
+    steps:
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.24.x'
+          cache: false
+      - name: Download published sources
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force downloads, apps | Out-Null
+          gh release download $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --pattern '*-Native-Source.zip' --dir downloads
+          if ($LASTEXITCODE -ne 0) { throw 'Source download failed' }
+          Get-ChildItem downloads -Filter '*.zip' | ForEach-Object {
+            Expand-Archive -LiteralPath $_.FullName -DestinationPath apps
+          }
+      - name: Test real Windows update and startup rollback
+        shell: pwsh
+        run: |
+          $modules = Get-ChildItem apps -Filter go.mod -Recurse
+          if ($modules.Count -eq 0) { throw 'No Go source modules found' }
+          foreach ($module in $modules) {
+            Push-Location $module.DirectoryName
+            try {
+              go test -count=1 -v ./internal/appupdate
+              if ($LASTEXITCODE -ne 0) { throw "Updater verification failed: $($module.DirectoryName)" }
+            } finally { Pop-Location }
+          }
