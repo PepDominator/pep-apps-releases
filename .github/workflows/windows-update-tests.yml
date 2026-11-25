@@ -45,5 +45,9 @@ jobs:
                 go test -count=1 -v -run 'TestNativeConsoleCompletion244|TestConsoleCompletion244|TestCupAndPlayoffStages244|TestReviewCalendar|TestReviewPlannerWorkspace' .
                 if ($LASTEXITCODE -ne 0) { throw 'Native console and cup regression failed' }
               }
+              if (Test-Path 'workspace24_test.go') {
+                go test -count=1 -v -run 'TestWorkspace24' .
+                if ($LASTEXITCODE -ne 0) { throw 'StreamDesk workspace regression failed' }
+              }
             } finally { Pop-Location }
           }
