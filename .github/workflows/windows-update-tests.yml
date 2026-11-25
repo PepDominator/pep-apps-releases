@@ -42,7 +42,7 @@ jobs:
               go test -count=1 -v ./internal/appupdate
               if ($LASTEXITCODE -ne 0) { throw "Updater verification failed: $($module.DirectoryName)" }
               if (Test-Path 'batch_console244_windows_test.go') {
-                go test -count=1 -v -run 'TestNativeConsoleCompletion244|TestConsoleCompletion244|TestCupAndPlayoffStages244' .
+                go test -count=1 -v -run 'TestNativeConsoleCompletion244|TestConsoleCompletion244|TestCupAndPlayoffStages244|TestReviewCalendar|TestReviewPlannerWorkspace' .
                 if ($LASTEXITCODE -ne 0) { throw 'Native console and cup regression failed' }
               }
             } finally { Pop-Location }
